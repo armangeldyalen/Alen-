@@ -37,8 +37,8 @@ export function RegistrationPage({ onSuccess, onGuest }: { onSuccess: () => void
 
   return <section className="registration-page">
     <div className="registration-art">
-      <div className="brand"><span>⚽</span><b>ПУТЬ К ЛЕГЕНДЕ</b></div>
-      <div><small>ТВОЯ ИСТОРИЯ НАЧИНАЕТСЯ ЗДЕСЬ</small><h1>От маленького клуба<br />до мировой славы</h1><p>Создай футболиста, заслужи внимание скаутов и приведи свою сборную к главному трофею.</p></div>
+      <div className="brand"><span>⚽</span><b>КУБОК МИРА 2026</b></div>
+      <div><h1>КУБОК МИРА 2026</h1><p>Создай своего игрока и выиграй Кубок мира.</p></div>
       <div className="feature-line"><span>01</span> Карьера футболиста <span>02</span> Матчи в 3D <span>03</span> Трофеи</div>
     </div>
     <div className="registration-form-wrap">

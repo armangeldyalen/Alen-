@@ -1,15 +1,34 @@
 .level-road {
   display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding: 8px 4px 18px;
+  flex-direction: column-reverse;
+  gap: 14px;
+  max-height: 560px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y proximity;
+  padding: 8px 12px 18px 4px;
   scrollbar-color: var(--lime) #14271c;
   cursor: grab;
   user-select: none;
-  touch-action: pan-y;
+  touch-action: pan-x;
+}
+
+.level-road .level-node {
+  width: 100%;
+  min-height: 150px;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
 }
 
 .level-road.dragging { cursor: grabbing; }
+
+.next-world-match{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px 20px;margin-bottom:18px;color:#fff;border-color:var(--lime);text-align:left}.next-world-match b{font:800 21px 'Barlow Condensed'}.next-world-match b span{color:var(--lime);margin:0 8px}.next-world-match em{font-style:normal;color:var(--muted);font-size:11px}.world-cup-groups{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;padding-bottom:24px}.group-table{padding:7px;border-radius:9px}.group-table.player-group{border:2px solid var(--lime);box-shadow:0 0 16px #b8f33b16}.group-table h2{font-size:15px;margin-bottom:5px}.group-head,.group-team{display:grid;grid-template-columns:1fr 17px 17px;gap:2px;align-items:center}.group-head{padding:0 3px 3px;color:#71877a;font-size:6px;font-weight:900;text-transform:uppercase}.group-team{min-height:23px;padding:3px;border-top:1px solid #294536;font-size:7px}.group-team b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.group-team span{text-align:center;color:#a8b7ae}.group-team.chosen-team{background:#b8f33b18;border-radius:4px;color:var(--lime)}
+
+@media(max-width:1050px){.world-cup-groups{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:800px){.world-cup-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.world-cup-groups{grid-template-columns:1fr}}
+
+.knockout-bracket{display:grid;grid-template-columns:repeat(5,minmax(125px,1fr));gap:9px;align-items:center;overflow-x:auto;padding:7px 3px 28px}.bracket-round h2{text-align:center;font-size:14px;color:var(--lime);margin-bottom:7px}.bracket-matches{display:flex;flex-direction:column;justify-content:space-around;gap:6px}.round-1 .bracket-matches{gap:15px}.round-2 .bracket-matches{gap:38px}.round-3 .bracket-matches{gap:75px}.bracket-match{padding:3px;background:#10251b;border:1px solid #294536;border-radius:6px;box-shadow:0 4px 10px #0004}.bracket-match.player-fixture{border:2px solid var(--lime)}.bracket-match>div{display:grid;grid-template-columns:15px 1fr 11px;align-items:center;gap:3px;min-height:21px;padding:2px 3px;font-size:7px}.bracket-match>div+div{border-top:1px solid #294536}.bracket-match b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bracket-match em{font-style:normal;color:var(--lime)}.bracket-match .advanced{color:var(--lime);background:#b8f33b0d}
 
 .team-actions {
   display: grid;
@@ -59,3 +78,9 @@
 @media (max-width: 520px) {
   .level-node { min-width: 155px; }
 }
+
+.next-world-match{flex-direction:row;align-items:center;gap:10px;padding:9px 12px;margin-bottom:10px;border-radius:9px}.next-world-match small{font-size:7px;white-space:nowrap}.next-world-match b{font-size:14px;white-space:nowrap}.next-world-match b span{margin:0 4px}.next-world-match em{margin-left:auto;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.match-summary-row{display:flex;align-items:stretch;gap:9px;margin-bottom:10px}.match-summary-row>.notice,.match-summary-row>.next-world-match{flex:1;margin:0;min-height:49px;display:flex;align-items:center}.match-summary-row>.notice{padding:9px 12px;font-size:10px}.match-summary-row>.next-world-match{min-width:0}.match-summary-row>.next-world-match em{display:none}@media(max-width:800px){.match-summary-row{flex-direction:column}.match-summary-row>.notice,.match-summary-row>.next-world-match{min-height:42px}}
+
+.registration-art{background-image:linear-gradient(90deg,rgba(3,15,9,.2),rgba(3,15,9,.88)),linear-gradient(0deg,rgba(3,15,9,.45),transparent 55%),url('/images/world-cup-stadium-bg.png');background-size:cover;background-position:38% center}.registration-art:after{background:radial-gradient(circle,#d7b63b12,transparent 68%);border-color:#d7b63b28}.registration-form-wrap{background:linear-gradient(90deg,#08170ff2,#0a1911)}

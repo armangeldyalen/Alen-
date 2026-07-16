@@ -21,11 +21,11 @@ export function CharacterCreator({ onCreate }: { onCreate: (career: Career) => v
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onCreate({ player, club: 'Рос', level: 1, season: 1, goals: 0, assists: 0, rating: 6.5, history: [], trophies: [] });
+    onCreate({ player, club: player.country, level: 1, season: 1, goals: 0, assists: 0, rating: 6.5, history: [], trophies: [] });
   };
 
   return <section className="creator">
-    <div className="brand"><span>⚽</span><b>ПУТЬ К ЛЕГЕНДЕ</b></div>
+    <div className="brand"><span>⚽</span><b>КУБОК МИРА 2026</b></div>
     <div className="creator__grid">
       <div className="preview-card"><div className="stadium-light" /><PlayerAvatar player={player} large /><h2>{player.name || 'Твой игрок'}</h2><p>№ {player.number} · {player.position}</p></div>
       <form className="panel creator__form" onSubmit={submit}>
@@ -37,7 +37,7 @@ export function CharacterCreator({ onCreate }: { onCreate: (career: Career) => v
         <div className="two-cols"><label>Позиция<input value="Нападающий" disabled /></label><label>Ведущая нога<select value={player.foot} onChange={(e) => update('foot', e.target.value as Player['foot'])}><option>Правая</option><option>Левая</option></select></label></div>
         <label>Рост: {player.height} см<input type="range" min="155" max="205" value={player.height} onChange={(e) => update('height', Number(e.target.value))} /></label>
         <label>Празднование<select value={player.celebration} onChange={(e) => update('celebration', e.target.value)}>{celebrations.map((x) => <option key={x}>{x}</option>)}</select></label>
-        <button className="primary" type="submit">НАЧАТЬ КАРЬЕРУ <span>→</span></button>
+        <button className="primary" type="submit">НАЧАТЬ КУБОК МИРА <span>→</span></button>
       </form>
     </div>
   </section>;

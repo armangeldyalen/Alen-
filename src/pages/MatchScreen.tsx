@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { opponentScore } from '../lib/matchEngine';
 import { Career, MatchInfo } from '../types/game';
 import { ThreePitch } from '../components/ThreePitch';
@@ -9,7 +9,7 @@ const startingTeam = () => [...teammates.map(([x,y]) => ({ x, y: y * 3.5 })), { 
 const startingOpponents = () => opponents.map(([x,y]) => ({ x, y }));
 
 export function MatchScreen({ career, match, onFinish }: { career: Career; match: MatchInfo; onFinish: (career: Career) => void }) {
-  const botGoals = useMemo(() => opponentScore(match), [match]);
+  const [botGoals, setBotGoals] = useState(() => opponentScore(match));
   const [goals, setGoals] = useState(0);
   const [message, setMessage] = useState('Выбери направление и силу удара');
   const [finished, setFinished] = useState(false);
@@ -49,7 +49,9 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
 
   const shoot = () => {
     if (resolving) return;
-    const scored = Math.random() < .5;
+    const shotDifficulty = Math.random();
+    const saveChance = Math.max(.22, Math.min(.86, .8 - shotDifficulty * .58 + match.power * .018));
+    const scored = Math.random() > saveChance;
     setResolving(true);
     setShotResult(scored ? 'goal' : 'save');
     window.setTimeout(() => {
@@ -67,9 +69,9 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      const pressed = event.key.toLowerCase();
+      const pressed = event.code === 'KeyW' ? 'w' : event.code === 'KeyA' ? 'a' : event.code === 'KeyS' ? 's' : event.code === 'KeyD' ? 'd' : event.code === 'KeyF' ? 'f' : event.code === 'Space' ? ' ' : event.key.toLowerCase();
       const key = pressed === 'z' || pressed === 'arrowup' ? 'w' : pressed === 'arrowleft' ? 'a' : pressed === 'arrowdown' ? 's' : pressed === 'arrowright' ? 'd' : pressed;
-      if (['w', 'a', 's', 'd', 'q', ' '].includes(key)) event.preventDefault();
+      if (['w', 'a', 's', 'd', 'f', ' '].includes(key)) event.preventDefault();
       if (paused && key === ' ') { setPaused(false); return; }
       if (paused) return;
       if (['w', 'a', 's', 'd'].includes(key)) setTeamPositions((positions) => positions.map((pos, index) => index !== controlledPlayer ? pos : {
@@ -78,7 +80,7 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
       }));
       if (event.repeat || finished) return;
       if (key === ' ') playAttack('pass');
-      if (key === 'q') shoot();
+      if (key === 'f') shoot();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -142,11 +144,11 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
   return <section className="match-screen">
     <header className="scoreboard"><div><small>{career.club}</small><b>{goals}</b></div><span>{matchTime}<br /><em>{match.tournament}</em></span><div><b>{botGoals}</b><small>{match.opponent}</small></div></header>
     <div className="pitch pitch--3d">
-      <ThreePitch paused={paused} playerNumber={career.player.number} playerSkin={career.player.skin} playerHair={career.player.hair} shotResult={shotResult} />
+      <ThreePitch paused={paused} playerNumber={career.player.number} playerSkin={career.player.skin} playerHair={career.player.hair} shotResult={shotResult} onOpponentGoal={() => setBotGoals((value) => Math.min(4, value + 1))} />
       <div className="pause-menu">{!paused && <button onClick={() => setPaused(true)}>Ⅱ Пауза</button>}<button onClick={quitMatch}>↩ Выйти</button></div>
       <div className="crowd">{Array.from({ length: 110 }, (_, i) => <i key={i} />)}</div>
       {['left','right','bottom'].map((side) => <div className={`stadium-stand stand--${side}`} key={side}>{Array.from({ length: side === 'bottom' ? 110 : 65 }, (_, index) => <i key={index} />)}</div>)}
-      <div className="keyboard-guide"><b>УПРАВЛЕНИЕ</b><span><kbd>W</kbd> вперёд</span><span><kbd>A</kbd> влево</span><span><kbd>S</kbd> назад</span><span><kbd>D</kbd> вправо</span><span><kbd>ПРОБЕЛ</kbd> пас</span><span><kbd>Q</kbd> удар</span></div>
+      <div className="keyboard-guide"><b>УПРАВЛЕНИЕ</b><span><kbd>W</kbd> вперёд</span><span><kbd>A</kbd> влево</span><span><kbd>S</kbd> назад</span><span><kbd>D</kbd> вправо</span><span><kbd>ЛКМ</kbd> точный пас</span><span><kbd>ПРОБЕЛ</kbd> быстрый пас</span><span><kbd>F</kbd> удар</span><span><kbd>E</kbd> подкат</span></div>
       {!finished && <div className="moment-status"><b>МАТЧ ИДЁТ</b><span>{message}</span></div>}
       <div className="center-circle" />
       {teamPositions.map((position, index) => <div className={`field-player teammate ${controlledPlayer === index ? 'controlled' : ''}`} style={{ left: `${position.x}%`, bottom: `${position.y}px` }} key={`t${index}`}>{index === 9 ? career.player.number : index + 2}</div>)}
@@ -157,6 +159,6 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
       {celebrating && <div className="celebration-player"><strong>{career.player.number}</strong><b>ГОООЛ!</b><span>{career.player.celebration}</span></div>}
       {paused && <div className="pause-overlay"><b>ПАУЗА</b><span>Нажми ПРОБЕЛ, чтобы продолжить</span></div>}
     </div>
-    {finished && <div className="match-controls panel"><div className="final-result"><small>МАТЧ ОКОНЧЕН</small><h1>{goals}:{botGoals}</h1><h2>{goals > botGoals ? 'ПОБЕДА!' : goals === botGoals ? 'НИЧЬЯ' : 'ПОРАЖЕНИЕ'}</h2><p>{goals > botGoals ? 'Скауты впечатлены твоей игрой.' : 'Результат сохранён. Возвращаться назад нельзя.'}</p><button className="primary" onClick={finish}>ПРОДОЛЖИТЬ КАРЬЕРУ</button></div></div>}
+    {finished && <div className="match-controls panel"><div className="final-result"><small>МАТЧ ОКОНЧЕН</small><h1>{goals}:{botGoals}</h1><h2>{goals > botGoals ? 'ПОБЕДА!' : goals === botGoals ? 'НИЧЬЯ' : 'ПОРАЖЕНИЕ'}</h2><p>{goals > botGoals ? 'Болельщики празднуют победу сборной!' : 'Результат сохранён. Возвращаться назад нельзя.'}</p><button className="primary" onClick={finish}>ПРОДОЛЖИТЬ ТУРНИР</button></div></div>}
   </section>;
 }

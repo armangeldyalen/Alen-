@@ -43,7 +43,7 @@ export default function App() {
     <main className="app-shell">
       {screen === 'create' && <CharacterCreator onCreate={(value) => { setCareer(value); setScreen('home'); }} />}
       {screen === 'home' && career && (
-        <CareerHome career={career} onPlay={(value) => { setMatch(value); setScreen('match'); }} onLobby={() => setScreen('lobby')} onReset={reset} onExit={exitToRegistration} />
+        <CareerHome career={career} onPlay={(value) => { setMatch(value); setScreen('match'); }} onLobby={() => setScreen('lobby')} onReset={reset} onExit={exitToRegistration} onEliminated={() => { localStorage.removeItem('road-to-glory-career'); setCareer(null); setMatch(null); setScreen('create'); }} />
       )}
       {screen === 'match' && career && match && (
         <MatchScreen career={career} match={match} onFinish={(value) => { setCareer(value); setScreen('home'); }} />
