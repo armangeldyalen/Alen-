@@ -1,6 +1,6 @@
 export type Screen = 'create' | 'home' | 'match' | 'lobby';
 export type Skin = 'light' | 'tan' | 'dark';
-export type Hair = 'short' | 'curly' | 'mohawk' | 'bald';
+export type Hair = 'short' | 'curly' | 'mohawk' | 'bald' | 'fade' | 'afro' | 'braids' | 'long';
 export type Position = 'Нападающий' | 'Полузащитник' | 'Защитник';
 
 export interface Player {
@@ -13,6 +13,8 @@ export interface Player {
   foot: 'Левая' | 'Правая';
   position: Position;
   celebration: string;
+  eyeColor?: 'brown' | 'blue' | 'green' | 'gray';
+  accessory?: 'none' | 'headband' | 'glasses' | 'wristband';
 }
 
 export interface MatchInfo {

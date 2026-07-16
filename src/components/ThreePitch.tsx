@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { Hair } from '../types/game';
 
 interface Props {
   paused: boolean;
   playerNumber: number;
   playerSkin: 'light' | 'tan' | 'dark';
-  playerHair: 'short' | 'curly' | 'mohawk' | 'bald';
+  playerHair: Hair;
   shotResult: 'goal' | 'save' | null;
   onOpponentGoal: () => void;
 }
@@ -104,7 +105,7 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, shotR
     scene.add(field);
 
     const skinColors = { light: 0xf0bd95, tan: 0xb87348, dark: 0x633a2a };
-    const hairColors = { short: 0x241a14, curly: 0x15110f, mohawk: 0x7b351f, bald: 0x000000 };
+    const hairColors = { short: 0x241a14, curly: 0x15110f, mohawk: 0x7b351f, bald: 0x000000, fade: 0x17120f, afro: 0x14100e, braids: 0x241710, long: 0x352016 };
     const botSkins = [0xf0bd95, 0xb87348, 0x633a2a, 0x8c5136];
     const botHairs = [0x17120f, 0x6d351e, 0xd2a55b, 0x321d13];
     const makePlayer = (color: number, number: number, skin: number, hair: number, bald = false, referee = false) => {
