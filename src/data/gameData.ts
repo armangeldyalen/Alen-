@@ -2,6 +2,7 @@ import { MatchInfo } from '../types/game';
 
 // The 48 officially qualified national teams for the 2026 World Cup.
 export const countries = [
+  'Казахстан 🇰🇿',
   'Канада 🇨🇦', 'Мексика 🇲🇽', 'США 🇺🇸',
   'Австралия 🇦🇺', 'Ирак 🇮🇶', 'Иран 🇮🇷', 'Япония 🇯🇵', 'Иордания 🇯🇴', 'Южная Корея 🇰🇷', 'Катар 🇶🇦', 'Саудовская Аравия 🇸🇦', 'Узбекистан 🇺🇿',
   'Алжир 🇩🇿', 'Кабо-Верде 🇨🇻', 'ДР Конго 🇨🇩', 'Кот-д’Ивуар 🇨🇮', 'Египет 🇪🇬', 'Гана 🇬🇭', 'Марокко 🇲🇦', 'Сенегал 🇸🇳', 'ЮАР 🇿🇦', 'Тунис 🇹🇳',
@@ -12,6 +13,16 @@ export const countries = [
 ];
 
 export const teamStrength: Record<string, number> = Object.fromEntries(countries.map((team) => [team, 5]));
+export const teamKitColors: Record<string, number> = Object.fromEntries(countries.map((team)=>[team,0xf2f2f2]));
+teamKitColors['Казахстан 🇰🇿']=0x28a7df;
+['Канада 🇨🇦','Южная Корея 🇰🇷','Катар 🇶🇦','Египет 🇪🇬','Гана 🇬🇭','Марокко 🇲🇦','Сенегал 🇸🇳','Тунис 🇹🇳','Гаити 🇭🇹','Панама 🇵🇦','Парагвай 🇵🇾','Швейцария 🇨🇭','Турция 🇹🇷','Австрия 🇦🇹','Бельгия 🇧🇪','Хорватия 🇭🇷','ДР Конго 🇨🇩','Португалия 🇵🇹','Испания 🇪🇸'].forEach((team)=>teamKitColors[team]=0xd92735);
+['Япония 🇯🇵','США 🇺🇸','Франция 🇫🇷','Шотландия 🏴','Италия 🇮🇹','Босния и Герцеговина 🇧🇦','Кюрасао 🇨🇼'].forEach((team)=>teamKitColors[team]=0x1756a9);
+['Мексика 🇲🇽','Ирак 🇮🇶','Саудовская Аравия 🇸🇦','Алжир 🇩🇿','ЮАР 🇿🇦'].forEach((team)=>teamKitColors[team]=0x16834b);
+['Австралия 🇦🇺','Бразилия 🇧🇷','Колумбия 🇨🇴','Эквадор 🇪🇨','Швеция 🇸🇪'].forEach((team)=>teamKitColors[team]=0xf0c928);
+['Аргентина 🇦🇷','Уругвай 🇺🇾'].forEach((team)=>teamKitColors[team]=0x75bce7);
+['Нидерланды 🇳🇱','Кот-д’Ивуар 🇨🇮'].forEach((team)=>teamKitColors[team]=0xf07824);
+export const teamAwayKitColors: Record<string,number>=Object.fromEntries(countries.map((team)=>[team,teamKitColors[team]>0xaaaaaa?0x172a55:0xf4f4f4]));
+teamStrength['Казахстан 🇰🇿']=5;
 ['Аргентина 🇦🇷','Бразилия 🇧🇷','Франция 🇫🇷','Испания 🇪🇸','Англия 🏴','Португалия 🇵🇹','Германия 🇩🇪'].forEach((team)=>teamStrength[team]=10);
 ['Нидерланды 🇳🇱','Бельгия 🇧🇪','Хорватия 🇭🇷','Марокко 🇲🇦','Уругвай 🇺🇾','Колумбия 🇨🇴','Швейцария 🇨🇭'].forEach((team)=>teamStrength[team]=9);
 ['Япония 🇯🇵','Сенегал 🇸🇳','Эквадор 🇪🇨','Австрия 🇦🇹','Норвегия 🇳🇴','Мексика 🇲🇽','США 🇺🇸'].forEach((team)=>teamStrength[team]=8);

@@ -9,6 +9,12 @@ export function loadCareer(): Career | null {
     if (!value) return null;
     const career = JSON.parse(value) as Career;
     if (!countries.includes(career.player.country)) return null;
+    if (career.player.hair === 'braids') career.player.hair = 'short';
+    if (career.player.accessory === 'wristband') career.player.accessory = 'none';
+    if (career.level < 4) {
+      career.level = 4;
+      career.history = career.history.filter((match) => match.level >= 4);
+    }
     career.club = career.player.country;
     return career;
   } catch { return null; }

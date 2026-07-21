@@ -6,14 +6,16 @@ import { LobbyScreen } from './pages/LobbyScreen';
 import { Career, MatchInfo, Screen } from './types/game';
 import { loadCareer, saveCareer } from './lib/storage';
 import { RegistrationPage } from './pages/RegistrationPage';
+import { DeviceChoice } from './pages/DeviceChoice';
 import { supabase } from './lib/supabase';
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [guest, setGuest] = useState(() => sessionStorage.getItem('football-guest') === 'true');
   const [career, setCareer] = useState<Career | null>(() => loadCareer());
-  const [screen, setScreen] = useState<Screen>(career ? 'home' : 'create');
+  const [screen, setScreen] = useState<Screen>(career ? (localStorage.getItem('football-device') ? 'home' : 'device') : 'create');
   const [match, setMatch] = useState<MatchInfo | null>(null);
+  const resetShop=()=>localStorage.setItem('world-cup-shop',JSON.stringify({balance:100,lastReward:Date.now(),owned:[]}));
 
   useEffect(() => { if (career) saveCareer(career); }, [career]);
   useEffect(() => {
@@ -28,6 +30,8 @@ export default function App() {
   const reset = () => {
     if (!confirm('Удалить карьеру и создать нового футболиста?')) return;
     localStorage.removeItem('road-to-glory-career');
+    localStorage.removeItem('football-device');
+    resetShop();
     setCareer(null);
     setScreen('create');
   };
@@ -39,14 +43,27 @@ export default function App() {
     setAuthenticated(false);
   };
 
+  const finishMatch=(value:Career)=>{
+    const result=value.history[value.history.length-1];
+    if(result&&!result.won&&result.level!==7){
+      localStorage.removeItem('road-to-glory-career');
+      localStorage.removeItem('football-device');
+      resetShop();
+      setCareer(null);setMatch(null);setScreen('create');
+      return;
+    }
+    setCareer(value);setScreen('home');
+  };
+
   return (
     <main className="app-shell">
-      {screen === 'create' && <CharacterCreator onCreate={(value) => { setCareer(value); setScreen('home'); }} />}
+      {screen === 'create' && <CharacterCreator initialCareer={career} onCreate={(value) => { const wasEditing=Boolean(career);setCareer(value);if(wasEditing)setScreen('home');else{resetShop();localStorage.removeItem('football-device');setScreen('device');} }} />}
+      {screen === 'device' && career && <DeviceChoice onChoose={(device)=>{localStorage.setItem('football-device',device);setScreen('home');}} />}
       {screen === 'home' && career && (
-        <CareerHome career={career} onPlay={(value) => { setMatch(value); setScreen('match'); }} onReset={reset} onExit={exitToRegistration} onUpdateCareer={setCareer} onEliminated={() => { localStorage.removeItem('road-to-glory-career'); setCareer(null); setMatch(null); setScreen('create'); }} />
+        <CareerHome career={career} onPlay={(value) => { setMatch(value); setScreen('match'); }} onEditPlayer={()=>setScreen('create')} onReset={reset} onExit={exitToRegistration} onUpdateCareer={setCareer} />
       )}
       {screen === 'match' && career && match && (
-        <MatchScreen career={career} match={match} onFinish={(value) => { setCareer(value); setScreen('home'); }} />
+        <MatchScreen career={career} match={match} onFinish={finishMatch} />
       )}
       {screen === 'lobby' && <LobbyScreen onBack={() => setScreen('home')} />}
     </main>

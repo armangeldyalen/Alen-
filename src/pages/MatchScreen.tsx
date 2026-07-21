@@ -1,21 +1,25 @@
 import { useEffect, useState } from 'react';
-import { opponentScore } from '../lib/matchEngine';
 import { Career, MatchInfo } from '../types/game';
 import { ThreePitch } from '../components/ThreePitch';
+import { MobileControls } from '../components/MobileControls';
 
 const teammates = [[22,18],[22,39],[22,62],[22,83],[38,25],[38,50],[38,75],[46,30],[46,70]];
 const opponents = [[78,18],[78,39],[78,62],[78,83],[62,25],[62,50],[62,75],[54,20],[54,50],[54,80]];
 const startingTeam = () => [...teammates.map(([x,y]) => ({ x, y: y * 3.5 })), { x: 48, y: 165 }];
 const startingOpponents = () => opponents.map(([x,y]) => ({ x, y }));
+const cleanTeamName=(team:string)=>[...team].filter((symbol)=>{const code=symbol.codePointAt(0)??0;return code<127462||code>127487;}).join('').trim();
+const teamFlagUrl=(team:string)=>{if(team.startsWith('Англия'))return'https://flagcdn.com/w40/gb-eng.png';if(team.startsWith('Шотландия'))return'https://flagcdn.com/w40/gb-sct.png';const regional=[...team].filter((symbol)=>(symbol.codePointAt(0)??0)>=127462&&(symbol.codePointAt(0)??0)<=127487);const code=regional.map((symbol)=>String.fromCharCode((symbol.codePointAt(0)??127462)-127397)).join('').toLowerCase();return code?`https://flagcdn.com/w40/${code}.png`:'';};
 
 export function MatchScreen({ career, match, onFinish }: { career: Career; match: MatchInfo; onFinish: (career: Career) => void }) {
-  const [botGoals, setBotGoals] = useState(() => opponentScore(match));
+  const phoneMode=localStorage.getItem('football-device')==='phone';
+  const [botGoals, setBotGoals] = useState(0);
   const [goals, setGoals] = useState(0);
   const [message, setMessage] = useState('Выбери направление и силу удара');
   const [finished, setFinished] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
   const [celebrating, setCelebrating] = useState(false);
   const [shotResult, setShotResult] = useState<'goal' | 'save' | null>(null);
+  const [shotPower,setShotPower]=useState(0);const [chargingShot,setChargingShot]=useState(false);const [shotStyle,setShotStyle]=useState<'normal'|'finesse'|'power'>('normal');
   const [paused, setPaused] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [teamPositions, setTeamPositions] = useState(startingTeam);
@@ -38,19 +42,11 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
     }, 900);
   };
 
-  const playAttack = (action: 'pass' | 'dribble') => {
-    if (resolving) return;
-    const success = Math.random() < (action === 'pass' ? .9 : .75) - match.power / 60;
-    if (success) {
-      if (action === 'pass') setControlledPlayer((value) => (value + 1) % teamPositions.length);
-      setMessage(action === 'pass' ? 'Точный пас партнёру и обратная передача!' : 'Защитник обыгран! Можно бить!');
-    } else completeChance(false, action === 'pass' ? 'Защитник перехватил передачу.' : 'Защитник отобрал мяч.');
-  };
-
-  const shoot = () => {
+  const shoot = (power = 50) => {
     if (resolving) return;
     const shotDifficulty = Math.random();
-    const saveChance = Math.max(.22, Math.min(.86, .8 - shotDifficulty * .58 + match.power * .018));
+    const powerBonus=Math.max(0,1-Math.abs(power-(shotStyle==='finesse'?68:shotStyle==='power'?88:76))/65);const styleBonus=shotStyle==='finesse'?.07:shotStyle==='power'?.04:0;
+    const saveChance = Math.max(.16, Math.min(.9, .88 - shotDifficulty * .45 - powerBonus*.3-styleBonus + match.power * .018));
     const scored = Math.random() > saveChance;
     setResolving(true);
     setShotResult(scored ? 'goal' : 'save');
@@ -68,10 +64,14 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
   };
 
   useEffect(() => {
+    if(!chargingShot)return;const timer=window.setInterval(()=>setShotPower((value)=>Math.min(100,value+3)),35);return()=>window.clearInterval(timer);
+  },[chargingShot]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      const pressed = event.code === 'KeyW' ? 'w' : event.code === 'KeyA' ? 'a' : event.code === 'KeyS' ? 's' : event.code === 'KeyD' ? 'd' : event.code === 'KeyF' ? 'f' : event.code === 'Space' ? ' ' : event.key.toLowerCase();
+      const pressed = event.code === 'KeyW' ? 'w' : event.code === 'KeyA' ? 'a' : event.code === 'KeyS' ? 's' : event.code === 'KeyD' ? 'd' : event.code === 'KeyF' ? 'f' : event.code === 'KeyR' ? 'r' : event.code === 'Space' ? ' ' : event.key.toLowerCase();
       const key = pressed === 'z' || pressed === 'arrowup' ? 'w' : pressed === 'arrowleft' ? 'a' : pressed === 'arrowdown' ? 's' : pressed === 'arrowright' ? 'd' : pressed;
-      if (['w', 'a', 's', 'd', 'f', ' '].includes(key)) event.preventDefault();
+      if (['w', 'a', 's', 'd', 'f', 'r', ' '].includes(key)) event.preventDefault();
       if (paused && key === ' ') { setPaused(false); return; }
       if (paused) return;
       if (['w', 'a', 's', 'd'].includes(key)) setTeamPositions((positions) => positions.map((pos, index) => index !== controlledPlayer ? pos : {
@@ -79,11 +79,12 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
         y: Math.max(8, Math.min(310, pos.y + (key === 'w' ? 3 : key === 's' ? -3 : 0))),
       }));
       if (event.repeat || finished) return;
-      if (key === ' ') playAttack('pass');
-      if (key === 'f') shoot();
+      if(key===' '||key==='f'||key==='r'){setShotStyle(key===' '?'normal':key==='f'?'finesse':'power');setShotPower(0);setChargingShot(true);}
     };
+    const onKeyUp=(event:KeyboardEvent)=>{if(['Space','KeyF','KeyR'].includes(event.code)&&chargingShot){setChargingShot(false);shoot(Math.max(10,shotPower));}};
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup',onKeyUp);
+    return () => {window.removeEventListener('keydown', onKeyDown);window.removeEventListener('keyup',onKeyUp);};
   });
 
   useEffect(() => {
@@ -142,13 +143,15 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
   };
 
   return <section className="match-screen">
-    <header className="scoreboard"><div><small>{career.club}</small><b>{goals}</b></div><span>{matchTime}<br /><em>{match.tournament}</em></span><div><b>{botGoals}</b><small>{match.opponent}</small></div></header>
+    <header className="scoreboard"><div><small className="scoreboard-team"><img src={teamFlagUrl(career.player.country)} alt=""/><span>{cleanTeamName(career.club)}</span></small><b>{goals}</b></div><span>{matchTime}<br /><em>{match.tournament}</em></span><div><b>{botGoals}</b><small className="scoreboard-team"><img src={teamFlagUrl(match.opponent)} alt=""/><span>{cleanTeamName(match.opponent)}</span></small></div></header>
     <div className="pitch pitch--3d">
-      <ThreePitch paused={paused} playerNumber={career.player.number} playerSkin={career.player.skin} playerHair={career.player.hair} shotResult={shotResult} onOpponentGoal={() => setBotGoals((value) => Math.min(4, value + 1))} />
+      <ThreePitch paused={paused} playerNumber={career.player.number} playerSkin={career.player.skin} playerHair={career.player.hair} playerHeight={career.player.height} playerAccessories={[...(career.player.accessories??[]),...(career.player.accessory&&career.player.accessory!=='none'?[career.player.accessory]:[])]} homeGoals={goals} awayGoals={botGoals} matchMinute={Math.min(90,Math.floor((60-timeLeft)*1.5))} botStrength={match.power} shotResult={shotResult} shotPower={shotPower} shotStyle={shotStyle} homeTeam={career.player.country} awayTeam={match.opponent} onOpponentGoal={() => setBotGoals((value) => Math.min(4, value + 1))} />
       <div className="pause-menu">{!paused && <button onClick={() => setPaused(true)}>Ⅱ Пауза</button>}<button onClick={quitMatch}>↩ Выйти</button></div>
       <div className="crowd">{Array.from({ length: 110 }, (_, i) => <i key={i} />)}</div>
       {['left','right','bottom'].map((side) => <div className={`stadium-stand stand--${side}`} key={side}>{Array.from({ length: side === 'bottom' ? 110 : 65 }, (_, index) => <i key={index} />)}</div>)}
-      <div className="keyboard-guide"><b>УПРАВЛЕНИЕ</b><span><kbd>W</kbd> вперёд</span><span><kbd>A</kbd> влево</span><span><kbd>S</kbd> назад</span><span><kbd>D</kbd> вправо</span><span><kbd>ЛКМ</kbd> точный пас</span><span><kbd>ПРОБЕЛ</kbd> быстрый пас</span><span><kbd>F</kbd> удар</span><span><kbd>E</kbd> подкат</span></div>
+      {!phoneMode&&<div className="keyboard-guide"><b>УПРАВЛЕНИЕ</b><span><kbd>W</kbd> вперёд</span><span><kbd>A</kbd> влево</span><span><kbd>S</kbd> назад</span><span><kbd>D</kbd> вправо</span><span><kbd>ЛКМ</kbd> точный пас</span><span><kbd>ПРОБЕЛ</kbd> обычный удар</span><span><kbd>F</kbd> подкрученный</span><span><kbd>R</kbd> мощный удар</span><span><kbd>E</kbd> подкат</span></div>}
+      {phoneMode&&<MobileControls />}
+      <div className={`shot-meter ${chargingShot?'charging':''}`}><div><span style={{width:`${shotPower}%`}} /></div><b>{shotPower}%</b><em>{shotStyle==='normal'?'ОБЫЧНЫЙ · ПРОБЕЛ':shotStyle==='finesse'?'ПОДКРУЧЕННЫЙ · F':'МОЩНЫЙ · R'}</em></div>
       {!finished && <div className="moment-status"><b>МАТЧ ИДЁТ</b><span>{message}</span></div>}
       <div className="center-circle" />
       {teamPositions.map((position, index) => <div className={`field-player teammate ${controlledPlayer === index ? 'controlled' : ''}`} style={{ left: `${position.x}%`, bottom: `${position.y}px` }} key={`t${index}`}>{index === 9 ? career.player.number : index + 2}</div>)}

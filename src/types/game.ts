@@ -1,4 +1,4 @@
-export type Screen = 'create' | 'home' | 'match' | 'lobby';
+export type Screen = 'create' | 'device' | 'home' | 'match' | 'lobby';
 export type Skin = 'light' | 'tan' | 'dark';
 export type Hair = 'short' | 'curly' | 'mohawk' | 'bald' | 'fade' | 'afro' | 'braids' | 'long';
 export type Position = 'Нападающий' | 'Полузащитник' | 'Защитник';
@@ -14,7 +14,8 @@ export interface Player {
   position: Position;
   celebration: string;
   eyeColor?: 'brown' | 'blue' | 'green' | 'gray';
-  accessory?: 'none' | 'headband' | 'glasses' | 'wristband';
+  accessory?: 'none' | 'headband' | 'glasses' | 'wristband' | 'captain';
+  accessories?: Array<'headband' | 'glasses' | 'captain'>;
 }
 
 export interface MatchInfo {
