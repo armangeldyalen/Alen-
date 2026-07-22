@@ -14,7 +14,8 @@ export function MobileControls(){
       <button className="mobile-switch" onPointerDown={(event)=>{event.preventDefault();window.dispatchEvent(new Event('mobile-switch'));}}>СМЕНА</button>
       <button className="mobile-pass" onPointerDown={(event)=>{event.preventDefault();window.dispatchEvent(new Event('mobile-pass'));}}>ПАС</button>
       <button className="mobile-tackle" onPointerDown={action('KeyE')} onPointerUp={release('KeyE')}>ПОДКАТ</button>
-      <button className="mobile-finesse" onPointerDown={action('KeyF')} onPointerUp={release('KeyF')} onPointerCancel={release('KeyF')}>КРУЧ.</button>
+      <button className="mobile-dribble-left" onPointerDown={action('Digit2')} onPointerUp={release('Digit2')}>ФИНТ 2</button>
+      <button className="mobile-dribble-right" onPointerDown={action('Digit3')} onPointerUp={release('Digit3')}>ФИНТ 3</button>
       <button className="mobile-shoot" onPointerDown={action('Space')} onPointerUp={release('Space')} onPointerCancel={release('Space')}>УДАР</button>
     </div>
   </div>;
