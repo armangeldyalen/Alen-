@@ -15,7 +15,7 @@ interface Props {
   awayGoals: number;
   matchMinute: number;
   botStrength: number;
-  shotResult: 'goal' | 'save' | null;
+  shotResult: 'goal' | 'save' | 'weak' | 'over' | null;
   shotPower: number;
   shotStyle: 'normal'|'finesse'|'power';
   homeTeam: string;
@@ -25,7 +25,7 @@ interface Props {
 
 export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playerHeight, playerAccessories, homeGoals, awayGoals, matchMinute, botStrength, shotResult, shotPower, shotStyle, homeTeam, awayTeam, onOpponentGoal }: Props) {
   const mount = useRef<HTMLDivElement>(null);
-  const shotResultRef = useRef<'goal' | 'save' | null>(shotResult);
+  const shotResultRef = useRef<'goal' | 'save' | 'weak' | 'over' | null>(shotResult);
   const shotPowerRef=useRef(shotPower);const shotStyleRef=useRef(shotStyle);
   const matchStateRef=useRef({homeGoals,awayGoals,matchMinute,botStrength});
   useEffect(()=>{shotResultRef.current=shotResult;},[shotResult]);
@@ -138,7 +138,7 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
     const fanBases: THREE.Vector3[]=[];const fanMatrix=new THREE.Matrix4();const fanHeadMatrix=new THREE.Matrix4();
     const fanColors=[0x2478ff,0xe94848,0xffffff,0xf4d33f,0x36bd68,0xff8a2c,0x9b5de5,0x21c9c3,0xf05aa6];
     const fanSkinColors=[0xf0bd95,0xb87348,0x633a2a,0xe1a477];
-    for(let i=0;i<fanCount;i+=1){const side=i%4;const row=Math.floor(i/4)%25;const along=(i*7%400)/399;let x=0,z=0;if(side<2){x=-41+along*82;z=(side===0?-1:1)*(25+row*.62)}else{const angle=-Math.PI/2+along*Math.PI;const radiusZ=27+row*.34;const curvedX=38+row*.52+Math.cos(angle)*5.5;x=(side===2?-1:1)*curvedX;z=Math.sin(angle)*radiusZ}const base=new THREE.Vector3(x,5.55+row*.38,z);fanBases.push(base);fanMatrix.setPosition(base);fanHeadMatrix.setPosition(base.x,base.y+.48,base.z);fanBodies.setMatrixAt(i,fanMatrix);fanHeads.setMatrixAt(i,fanHeadMatrix);fanBodies.setColorAt(i,new THREE.Color(fanColors[i%fanColors.length]));fanHeads.setColorAt(i,new THREE.Color(fanSkinColors[(i*3)%fanSkinColors.length]));}fanBodies.instanceMatrix.needsUpdate=true;fanHeads.instanceMatrix.needsUpdate=true;scene.add(fanBodies,fanHeads);
+    for(let i=0;i<fanCount;i+=1){const side=i%4;const localIndex=Math.floor(i/4);const seatsPerRow=72;const row=Math.min(13,Math.floor(localIndex/seatsPerRow));const column=localIndex%seatsPerRow;const along=column/(seatsPerRow-1);let x=0,z=0;if(side<2){x=-39.5+along*79;z=(side===0?-1:1)*(25+row*.82)}else{x=(side===2?-1:1)*(38+row*.82);z=-26.5+along*53}const base=new THREE.Vector3(x,5.62+row*.48,z);fanBases.push(base);fanMatrix.setPosition(base);fanHeadMatrix.setPosition(base.x,base.y+.48,base.z);fanBodies.setMatrixAt(i,fanMatrix);fanHeads.setMatrixAt(i,fanHeadMatrix);fanBodies.setColorAt(i,new THREE.Color(fanColors[i%fanColors.length]));fanHeads.setColorAt(i,new THREE.Color(fanSkinColors[(i*3)%fanSkinColors.length]));}fanBodies.instanceMatrix.needsUpdate=true;fanHeads.instanceMatrix.needsUpdate=true;scene.add(fanBodies,fanHeads);
     const seatBottoms=new THREE.InstancedMesh(new THREE.BoxGeometry(.38,.12,.34),new THREE.MeshStandardMaterial({color:0x1769aa,roughness:.72}),fanCount);
     const seatBacks=new THREE.InstancedMesh(new THREE.BoxGeometry(.38,.42,.09),new THREE.MeshStandardMaterial({color:0x208bd0,roughness:.7}),fanCount);
     const seatMatrix=new THREE.Matrix4();const seatBackMatrix=new THREE.Matrix4();const seatRotation=new THREE.Quaternion();const seatScale=new THREE.Vector3(1,1,1);const seatColors=[0x1769aa,0x24a6df,0x123f75];
@@ -198,19 +198,24 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
         boot.position.set(.12, -.28, side * .24); boot.castShadow = true; group.add(boot);
         [-.13,.1].forEach((x) => { const stud = new THREE.Mesh(new THREE.CylinderGeometry(.045,.035,.1,6), bootMaterial); stud.position.set(x,-.4,side*.24); group.add(stud); });
       });
-      const labelCanvas = document.createElement('canvas'); labelCanvas.width = 64; labelCanvas.height = 64;
+      const labelCanvas = document.createElement('canvas'); labelCanvas.width = 128; labelCanvas.height = 128;
       const context = labelCanvas.getContext('2d');
-      if (context) { context.fillStyle = '#ffffff'; context.font = 'bold 42px Arial'; context.textAlign = 'center'; context.textBaseline = 'middle'; context.fillText(String(number), 32, 34); }
-      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(labelCanvas), transparent:true,depthTest:true,depthWrite:false }));
-      label.position.set(-.46, 1.55, 0); label.scale.set(.62,.62,.62); label.renderOrder = 5; if(!referee)group.add(label);
-      const frontCanvas = document.createElement('canvas'); frontCanvas.width = 192; frontCanvas.height = 128;
-      const frontContext = frontCanvas.getContext('2d');
-      if (frontContext) {
-        frontContext.fillStyle = '#ffffff'; frontContext.textAlign = 'center';
-        frontContext.font = 'bold 30px Arial'; frontContext.fillText(String(number), 96, 46);
+      if (context) {
+        context.font = '900 76px Arial'; context.textAlign = 'center'; context.textBaseline = 'middle';
+        context.lineJoin = 'round'; context.lineWidth = 12; context.strokeStyle = '#101820';
+        context.strokeText(String(number), 64, 67);
+        context.fillStyle = '#ffffff'; context.fillText(String(number), 64, 67);
       }
-      const frontLabel = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(frontCanvas), transparent:true,depthTest:true,depthWrite:false }));
-      frontLabel.position.set(.46, 1.55, 0); frontLabel.scale.set(1.05,.7,1); frontLabel.renderOrder = 5; if(!referee)group.add(frontLabel);
+      const numberTexture=new THREE.CanvasTexture(labelCanvas);
+      numberTexture.colorSpace=THREE.SRGBColorSpace;
+      const label = new THREE.Mesh(
+        new THREE.PlaneGeometry(.92,.92),
+        new THREE.MeshBasicMaterial({map:numberTexture,transparent:true,depthTest:true,depthWrite:false,side:THREE.FrontSide})
+      );
+      label.position.set(-.548,1.58,0);
+      label.rotation.y=-Math.PI/2;
+      label.renderOrder=5;
+      if(!referee)group.add(label);
       if(referee){
         [-.32,-.11,.11,.32].forEach((z)=>{[-1,1].forEach((front)=>{const stripe=new THREE.Mesh(new THREE.BoxGeometry(.035,.88,.095),new THREE.MeshStandardMaterial({color:0xf5f5f2}));stripe.position.set(front*.52,1.58,z);group.add(stripe);});});
         const badge=new THREE.Mesh(new THREE.BoxGeometry(.03,.28,.2),new THREE.MeshStandardMaterial({color:0xf4db38}));
@@ -232,6 +237,33 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
     if(colorDistance(homeKit,awayKit)<105)awayKit=teamAwayKitColors[awayTeam]??(homeKit>0xaaaaaa?0x172a55:0xf4f4f4);
     const own = [[-17,-10],[-17,10],[-7,0]].map(([x,z],i) => { const main=i===2; const p=makePlayer(homeKit,ownNumbers[i],main?skinColors[playerSkin]:botSkins[i],main?hairColors[playerHair]:botHairs[i],main&&playerHair==='bald',false,main?playerHair:undefined,main?playerAccessories:[]);p.scale.y=main?.9+(playerHeight-155)/50*.22:1;p.position.set(x,0,z);const indicator=new THREE.Mesh(new THREE.ConeGeometry(.46,.82,4),new THREE.MeshStandardMaterial({color:0xff9f1c,emissive:0xff5a00,emissiveIntensity:1.8}));indicator.name='ball-owner-indicator';indicator.position.set(0,3.72,0);indicator.rotation.z=Math.PI;indicator.visible=false;p.add(indicator);return p; });
     const rivals = [[17,-10],[17,10],[7,0]].map(([x,z],i) => { const p=makePlayer(awayKit,rivalNumbers[i],botSkins[(i+2)%4],botHairs[(i+1)%4]);p.position.set(x,0,z);return p; });
+    const makeTechnicalBench=(side:-1|1,kitColor:number,startNumber:number)=>{
+      const z=side*24.9;const facing=side<0?0:Math.PI;
+      const shelter=new THREE.Group();
+      const frameMaterial=new THREE.MeshStandardMaterial({color:0xeaf4f8,metalness:.4,roughness:.35});
+      const glassMaterial=new THREE.MeshStandardMaterial({color:0x8ed9f2,transparent:true,opacity:.28,roughness:.15});
+      const seatMaterial=new THREE.MeshStandardMaterial({color:side<0?0x1769aa:0xd93645,roughness:.72});
+      const back=new THREE.Mesh(new THREE.BoxGeometry(11,2.8,.15),glassMaterial);back.position.y=1.55;shelter.add(back);
+      const roof=new THREE.Mesh(new THREE.BoxGeometry(11,.16,2.3),frameMaterial);roof.position.set(0,3,side<0?.9:-.9);shelter.add(roof);
+      [-5.35,5.35].forEach((x)=>{const post=new THREE.Mesh(new THREE.BoxGeometry(.15,3,.15),frameMaterial);post.position.set(x,1.5,0);shelter.add(post);});
+      const bench=new THREE.Mesh(new THREE.BoxGeometry(8.4,.28,.8),seatMaterial);bench.position.set(-.7,.72,side<0?-.45:.45);shelter.add(bench);
+      shelter.position.set(0,0,z);scene.add(shelter);
+      [-3.2,-.7,1.8].forEach((x,index)=>{
+        const substitute=makePlayer(kitColor,startNumber+index,botSkins[(index+1)%botSkins.length],botHairs[(index+2)%botHairs.length]);
+        substitute.position.set(x,.63,z+(side<0?-.15:.15));substitute.rotation.y=facing;substitute.scale.set(.88,.88,.88);
+        (substitute.userData.legs as THREE.Mesh[]).forEach((leg)=>{leg.rotation.z=-Math.PI*.42;leg.position.y=.35;});
+      });
+      const coach=new THREE.Group();
+      const suit=new THREE.MeshStandardMaterial({color:0x18243b});
+      const coachBody=new THREE.Mesh(new THREE.CylinderGeometry(.4,.5,1.3,10),suit);coachBody.position.y=1.5;coach.add(coachBody);
+      const shirt=new THREE.Mesh(new THREE.BoxGeometry(.82,.75,.08),new THREE.MeshStandardMaterial({color:0xf3f4f5}));shirt.position.set(side<0?.43:-.43,1.65,0);coach.add(shirt);
+      const tie=new THREE.Mesh(new THREE.BoxGeometry(.04,.42,.11),new THREE.MeshStandardMaterial({color:0xb51f35}));tie.position.set(side<0?.48:-.48,1.65,0);coach.add(tie);
+      const head=new THREE.Mesh(new THREE.SphereGeometry(.42,12,8),new THREE.MeshStandardMaterial({color:botSkins[1]}));head.position.y=2.38;coach.add(head);
+      const coachHair=new THREE.Mesh(new THREE.SphereGeometry(.43,12,6,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:botHairs[0]}));coachHair.position.y=2.52;coach.add(coachHair);
+      coach.position.set(4.35,0,z+(side<0?1.35:-1.35));coach.rotation.y=facing;scene.add(coach);
+    };
+    makeTechnicalBench(-1,homeKit,12);
+    makeTechnicalBench(1,awayKit,12);
     const flagUrl=(team:string)=>{if(team.startsWith('Англия'))return'https://flagcdn.com/w40/gb-eng.png';if(team.startsWith('Шотландия'))return'https://flagcdn.com/w40/gb-sct.png';const regional=[...team].filter((symbol)=>(symbol.codePointAt(0)??0)>=127462&&(symbol.codePointAt(0)??0)<=127487);const code=regional.map((symbol)=>String.fromCharCode((symbol.codePointAt(0)??127462)-127397)).join('').toLowerCase();return code?`https://flagcdn.com/w40/${code}.png`:'';};
     const flagLoader=new THREE.TextureLoader();flagLoader.setCrossOrigin('anonymous');
     const addShirtFlag=(footballer:THREE.Group,team:string)=>{const url=flagUrl(team);if(!url)return;flagLoader.load(url,(texture)=>{texture.colorSpace=THREE.SRGBColorSpace;const flag=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthTest:true}));flag.position.set(.55,1.72,-.27);flag.scale.set(.34,.23,1);flag.renderOrder=6;footballer.add(flag);});};
@@ -240,13 +272,14 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
     [-32,32].forEach((x,i) => { const p=makePlayer(0xf05aa6,1,botSkins[(i+1)%4],botHairs[(i+3)%4]);p.position.set(x,0,0);keepers.push(p); });
     const referee=makePlayer(0x151817,0,botSkins[1],botHairs[0],false,true);
     referee.position.set(0,0,-5.5);referee.rotation.y=Math.PI/2;
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(.42,16,12), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x164fdd, emissiveIntensity: .35 }));
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(.55,20,16), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xff6a00, emissiveIntensity: .55,roughness:.3 }));
     ball.castShadow = true; scene.add(ball);
     const slideDuration = 1.15;
     let selected = 2; let rivalSelected = 2; let possession: 'own' | 'rival' = 'own'; let stealCooldown = 0; let dribbleCooldown = 0; let dribbleTime = 0; let dribbleSide = 0; let slideTime = 0;
+    const ownPassCycle=new Set<number>([selected]);let lastPossession: 'own'|'rival'=possession;
     const slideDirection = new THREE.Vector3(1, 0, 0);
     let passTarget: number|null=null;let passProgress=0;const passStart=new THREE.Vector3();let ownKeeperPassTarget:number|null=null;let ownKeeperPassProgress=0;const ownKeeperPassStart=new THREE.Vector3();
-    let activeShot:'goal'|'save'|null=null;let shotProgress=0;const shotStart=new THREE.Vector3();
+    let activeShot:'goal'|'save'|'weak'|'over'|null=null;let shotProgress=0;const shotStart=new THREE.Vector3();let rejectedShotRequest=false;let lastCanShoot:boolean|null=null;
     let rivalSlideTime = 0; let rivalSlider = 0;
     const rivalSlideDirection = new THREE.Vector3(-1, 0, 0);
     let ownFallTime = 0; let ownFallIndex = 2;
@@ -266,8 +299,9 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
     const physicalKeys: Record<string, string> = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyQ: 'pass' };
     let kickoffPause=0;
     let kickoffOwnFormation=[[-17,-10],[-17,10],[-6,0]];let kickoffRivalFormation=[[17,-10],[17,10],[6,0]];
-    const resetKickoff=(conceded:'own'|'rival')=>{kickoffOwnFormation=[[-17,-10],[-17,10],[conceded==='own'?-1:-6,0]];kickoffRivalFormation=[[17,-10],[17,10],[conceded==='rival'?1:6,0]];keepers[0].position.set(-32,0,0);keepers[1].position.set(32,0,0);possession=conceded;selected=2;rivalSelected=2;passTarget=null;ownKeeperPassTarget=null;rivalPassTarget=null;rivalPasses=0;rivalShot=null;rivalShotProgress=0;aiPassCooldown=1.2;activeShot=null;shotProgress=0;velocity.set(0,0);ball.position.set(0,.42,0);stealCooldown=2;kickoffPause=2;};
+    const resetKickoff=(conceded:'own'|'rival')=>{kickoffOwnFormation=[[-17,-10],[-17,10],[conceded==='own'?-1:-6,0]];kickoffRivalFormation=[[17,-10],[17,10],[conceded==='rival'?1:6,0]];keepers[0].position.set(-32,0,0);keepers[1].position.set(32,0,0);possession=conceded;selected=2;rivalSelected=2;passTarget=null;ownKeeperPassTarget=null;rivalPassTarget=null;rivalPasses=0;rivalShot=null;rivalShotProgress=0;aiPassCooldown=1.2;activeShot=null;shotProgress=0;velocity.set(0,0);ball.position.set(0,.56,0);stealCooldown=2;kickoffPause=2;};
     const controlKey = (event: KeyboardEvent) => physicalKeys[event.code] ?? event.key.toLowerCase();
+    const nextPassReceiver=(target:THREE.Vector3)=>{let available=own.map((_,index)=>index).filter((index)=>index!==selected&&!ownPassCycle.has(index));if(available.length===0){ownPassCycle.clear();ownPassCycle.add(selected);available=own.map((_,index)=>index).filter((index)=>index!==selected);}let receiver=-1;let bestDistance=Infinity;available.forEach((index)=>{const distance=own[index].position.distanceTo(target);if(distance<bestDistance){bestDistance=distance;receiver=index;}});return receiver;};
     const down = (event: KeyboardEvent) => {
       const key = controlKey(event); keys.add(key);
       if(event.code==='Space'&&possession==='own')window.dispatchEvent(new CustomEvent('football-player-position',{detail:{x:own[selected].position.x}}));
@@ -294,8 +328,7 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
         event.preventDefault();
       }
       if (event.code === 'KeyQ' && possession === 'own' && passTarget === null && !activeShot) {
-        let receiver=-1;let bestDistance=Infinity;
-        own.forEach((teammate,index)=>{if(index===selected)return;const distance=teammate.position.distanceTo(ball.position);if(distance<bestDistance){bestDistance=distance;receiver=index;}});
+        const receiver=nextPassReceiver(ball.position);
         if(receiver>=0){passTarget=receiver;passStart.copy(ball.position);passProgress=0;}
         event.preventDefault();
       }
@@ -310,22 +343,23 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
       if(event.button===0&&possession==='own'&&passTarget===null){
         const bounds=renderer.domElement.getBoundingClientRect();pointer.x=((event.clientX-bounds.left)/bounds.width)*2-1;pointer.y=-((event.clientY-bounds.top)/bounds.height)*2+1;raycaster.setFromCamera(pointer,camera);
         if(raycaster.ray.intersectPlane(pitchPlane,aimedPoint)){
-          let receiver=-1;let nearestDistance=Infinity;
-          own.forEach((teammate,index)=>{if(index===selected)return;const distance=Math.hypot(teammate.position.x-aimedPoint.x,teammate.position.z-aimedPoint.z);if(distance<nearestDistance){nearestDistance=distance;receiver=index;}});
+          const receiver=nextPassReceiver(aimedPoint);const nearestDistance=receiver>=0?Math.hypot(own[receiver].position.x-aimedPoint.x,own[receiver].position.z-aimedPoint.z):Infinity;
           if(receiver>=0&&nearestDistance<8){passTarget=receiver;passStart.copy(ball.position);passProgress=0;}
         }
         event.preventDefault();
       }
       if (event.button === 2) { rotatingCamera = true; renderer.domElement.setPointerCapture(event.pointerId); }
     };
-    const mobilePass=()=>{if(possession!=='own'||passTarget!==null)return;let receiver=-1;let bestDistance=Infinity;own.forEach((teammate,index)=>{if(index===selected)return;const distance=teammate.position.distanceTo(ball.position);if(distance<bestDistance){bestDistance=distance;receiver=index;}});if(receiver>=0){passTarget=receiver;passStart.copy(ball.position);passProgress=0;}};
+    const mobilePass=()=>{if(possession!=='own'||passTarget!==null)return;const receiver=nextPassReceiver(ball.position);if(receiver>=0){passTarget=receiver;passStart.copy(ball.position);passProgress=0;}};
     const mobileSwitch=()=>{if(possession==='own'||paused||kickoffPause>0||passTarget!==null||activeShot)return;selected=(selected+1)%own.length;velocity.set(0,0);};
+    const halftimeKickoff=()=>resetKickoff('own');
     const pointerMove = (event: PointerEvent) => { if (!rotatingCamera) return; cameraYaw-=event.movementX*.006; };
     const pointerUp = (event: PointerEvent) => { if (event.button === 2) rotatingCamera = false; };
     const stopMenu = (event: MouseEvent) => event.preventDefault();
     window.addEventListener('keydown', down); window.addEventListener('keyup', up);
     window.addEventListener('mobile-pass',mobilePass);
     window.addEventListener('mobile-switch',mobileSwitch);
+    window.addEventListener('football-halftime-kickoff',halftimeKickoff);
     renderer.domElement.addEventListener('pointerdown', pointerDown); renderer.domElement.addEventListener('pointermove', pointerMove); renderer.domElement.addEventListener('pointerup', pointerUp); renderer.domElement.addEventListener('contextmenu', stopMenu);
     const animateKeeperDive=(keeper:THREE.Group,progress:number,targetZ:number,height:number)=>{const flight=Math.sin(Math.min(1,progress)*Math.PI);const travel=THREE.MathUtils.smoothstep(progress,.04,.7)*(1-THREE.MathUtils.smoothstep(progress,.82,1));const direction=targetZ>=0?1:-1;keeper.position.z=targetZ*travel;keeper.position.y=height*flight;keeper.rotation.x=-direction*flight*1.18;keeper.rotation.z=flight*.12;(keeper.userData.arms as THREE.Group[]).forEach((arm)=>{arm.rotation.x=direction*flight*1.35;arm.rotation.z*=.8;});(keeper.userData.legs as THREE.Mesh[]).forEach((leg,index)=>{leg.rotation.x=direction*flight*(index===0?.38:.2);});};
     let frame = 0; let fanAnimationAccumulator = 0; const clock = new THREE.Clock();
@@ -397,7 +431,24 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
       if(rivalFallTime>0){rivalFallTime=Math.max(0,rivalFallTime-dt);animateHitFall(rivals[rivalFallIndex],rivalFallTime,-1);}
       let carrier:THREE.Group=player;
       const defensiveX=botTactic.defensiveLine==='low'?27:botTactic.defensiveLine==='high'?16:22;
-      if(possession==='own'&&!playPaused){[0,1].forEach((index)=>{if(index===rivalSlider&&rivalSlideTime>0)return;const anchor=new THREE.Vector3(defensiveX,0,index===0?-11:11);rivals[index].position.lerp(anchor,Math.min(1,dt*1.15));});}
+      if(!playPaused&&possession==='own'){
+        own.forEach((teammate,index)=>{if(index===selected)return;const lane=index===0?-10:10;const supportX=THREE.MathUtils.clamp(player.position.x-8-index*2,-28,20);const motion=Math.sin(performance.now()*.0016+index*Math.PI)*1.5;teammate.position.lerp(new THREE.Vector3(supportX,0,lane+motion),Math.min(1,dt*1.7));teammate.rotation.y=-Math.atan2((lane+motion)-teammate.position.z,supportX-teammate.position.x);});
+      }else if(!playPaused){
+        const rivalCarrier=rivals[rivalSelected];own.forEach((defender,index)=>{if(index===selected)return;const coverX=THREE.MathUtils.clamp(rivalCarrier.position.x-7-index*2,-28,-3);const coverZ=index===0?-9:9;const motion=Math.sin(performance.now()*.0018+index*2.4)*1.4;defender.position.lerp(new THREE.Vector3(coverX,0,coverZ+motion),Math.min(1,dt*1.8));defender.rotation.y=-Math.atan2(rivalCarrier.position.z-defender.position.z,rivalCarrier.position.x-defender.position.x);});
+      }
+      if(possession==='own'&&!playPaused){
+        const movementTime=performance.now()*.0015;
+        rivals.forEach((defender,index)=>{
+          if(index===rivalSlider&&rivalSlideTime>0)return;
+          const baseZ=index===0?-11:index===1?11:0;
+          const baseX=index===2?defensiveX-8:defensiveX;
+          const patrolX=baseX+Math.sin(movementTime+index*2.1)*1.8;
+          const patrolZ=baseZ+Math.cos(movementTime*1.25+index*1.7)*2.2;
+          const anchor=new THREE.Vector3(patrolX,0,patrolZ);
+          defender.position.lerp(anchor,Math.min(1,dt*(1.25+botTactic.pressing*.035)));
+          defender.rotation.y=-Math.atan2(anchor.z-defender.position.z,anchor.x-defender.position.x);
+        });
+      }
       if(!playPaused&&possession==='own'){
         const pressTarget=passTarget!==null?ball.position:player.position;let chosen=0;let nearestPressDistance=Infinity;
         rivals.forEach((candidate,index)=>{const candidateDistance=candidate.position.distanceTo(pressTarget);if(candidateDistance<nearestPressDistance){nearestPressDistance=candidateDistance;chosen=index;}});
@@ -408,7 +459,10 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
       else if(!playPaused){
         carrier=rivals[rivalSelected];
         const attackBoost=botTactic.style==='attacking'?.6:botTactic.style==='defensive'?-.15:0;const counterBoost=botTactic.counterattack?.7:0;const attackSpeed=2.8+botTactic.attackSpeed*.16+attackBoost+counterBoost;
-        if(rivalPassTarget===null&&!rivalShot)carrier.position.x-=dt*attackSpeed;
+        if(rivalPassTarget===null&&!rivalShot){
+          carrier.position.x-=dt*attackSpeed;
+          carrier.position.z=THREE.MathUtils.clamp(carrier.position.z+Math.sin(performance.now()*.002+rivalSelected)*dt*1.35,-18,18);
+        }
         const swapSides=Math.sin(performance.now()*.00065)>0;
         rivals.forEach((teammate,index)=>{if(index===rivalSelected||index===rivalPassTarget)return;const lane=index===0?(swapSides?10:-10):index===1?(swapSides?-10:10):(carrier.position.z>0?-5:5);const runAhead=index===2?6:2.5;const supportX=THREE.MathUtils.clamp(carrier.position.x-runAhead,-29,25);teammate.position.lerp(new THREE.Vector3(supportX,0,lane),Math.min(1,dt*(1.35+botTactic.attackSpeed*.08)));teammate.rotation.y=Math.PI;});
         if(aiPassCooldown===0&&rivalPassTarget===null&&!rivalShot&&carrier.position.x>-18){
@@ -419,9 +473,12 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
         let nearest=0;let distance=Infinity;own.forEach((p,i)=>{const d=p.position.distanceTo(carrier.position);if(d<distance){distance=d;nearest=i}});const chaser=own[nearest];if(nearest!==selected&&!rivalShot){const direction=carrier.position.clone().sub(chaser.position);direction.y=0;if(direction.length()>.1)chaser.position.add(direction.normalize().multiplyScalar(dt*3));}if(distance<1.2&&stealCooldown===0&&!rivalShot){possession='own';selected=nearest;rivalPassTarget=null;rivalPasses=0;stealCooldown=1.2;}
       }
       carrier=possession==='own'?own[selected]:rivals[rivalSelected];
+      const canShoot=possession==='own'&&passTarget===null&&ownKeeperPassTarget===null&&!activeShot&&kickoffPause===0&&!paused;
+      if(canShoot!==lastCanShoot){lastCanShoot=canShoot;window.dispatchEvent(new CustomEvent('football-can-shoot',{detail:canShoot}));}
       own.forEach((footballer,index)=>{const indicator=footballer.getObjectByName('ball-owner-indicator');if(indicator){indicator.visible=possession==='own'&&ownKeeperPassTarget===null&&index===selected;indicator.rotation.y+=dt*2.4;}});
       const requestedShot=shotResultRef.current;
-      if(requestedShot&&!activeShot){activeShot=requestedShot;shotProgress=0;shotStart.copy(ball.position);passTarget=null;velocity.set(0,0);}
+      if(!requestedShot)rejectedShotRequest=false;
+      if(requestedShot&&!activeShot&&!rejectedShotRequest){if(canShoot){activeShot=requestedShot;shotProgress=0;shotStart.copy(ball.position);passTarget=null;velocity.set(0,0);}else rejectedShotRequest=true;}
       if(activeShot&&possession==='own'){
         const styleSpeed=shotStyleRef.current==='power'?2.15:shotStyleRef.current==='finesse'?1.35:1.65;shotProgress=Math.min(1,shotProgress+dt*styleSpeed*(.7+shotPowerRef.current/250));
         const keeper=keepers[1];
@@ -430,10 +487,14 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
           ball.position.lerpVectors(shotStart,goalTarget,flight);ball.position.y+=Math.sin(flight*Math.PI)*2.25;
           if(netTime>0){ball.position.x=38.4-Math.sin(netTime*Math.PI)*.55;ball.position.y=THREE.MathUtils.lerp(1.65,.48,netTime);ball.position.z=-2.4+Math.sin(netTime*Math.PI*3)*.22*(1-netTime);}
           animateKeeperDive(keeper,Math.min(1,shotProgress*1.22),2.2,1.05);
-        }else{
+        }else if(activeShot==='save'){
           const saveTarget=new THREE.Vector3(32.2,2.15,2.8);ball.position.lerpVectors(shotStart,saveTarget,shotProgress);ball.position.y+=Math.sin(shotProgress*Math.PI)*2.1;
           animateKeeperDive(keeper,Math.min(1,shotProgress*1.18),2.65,1.45);
           if(shotProgress>.82){ball.position.x-=Math.sin((shotProgress-.82)/.18*Math.PI)*1.2;ball.position.y+=.45;}
+        }else if(activeShot==='weak'){
+          const weakTarget=new THREE.Vector3(Math.min(26,shotStart.x+10),.56,shotStart.z*.82);ball.position.lerpVectors(shotStart,weakTarget,THREE.MathUtils.smoothstep(shotProgress,0,.82));ball.position.y=.56+Math.sin(shotProgress*Math.PI)*.38;
+        }else{
+          const overTarget=new THREE.Vector3(39,7.5,shotStart.z*.25);ball.position.lerpVectors(shotStart,overTarget,shotProgress);ball.position.y+=Math.sin(shotProgress*Math.PI)*2.8;
         }
         ball.rotation.z+=dt*18;
         if(!requestedShot&&shotProgress>=1){
@@ -441,6 +502,7 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
           else{
             let receiver=0;let nearestDistance=Infinity;
             rivals.forEach((teammate,index)=>{const distance=teammate.position.distanceTo(keepers[1].position);if(distance<nearestDistance){nearestDistance=distance;receiver=index;}});
+            if(activeShot==='weak'||activeShot==='over')ball.position.copy(keepers[1].position).setY(.55);
             possession='rival';rivalSelected=receiver;rivalPassTarget=receiver;rivalPassStart.copy(ball.position);rivalPassProgress=0;rivalPasses=0;aiPassCooldown=1.2;activeShot=null;shotProgress=0;
           }
         }
@@ -456,16 +518,17 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
         ball.rotation.z-=dt*19;
         if(rivalShotProgress>=1){if(rivalShot==='goal'){onOpponentGoal();resetKickoff('own');}else{let receiver=0;let nearestDistance=Infinity;own.forEach((teammate,index)=>{const distance=teammate.position.distanceTo(keepers[0].position);if(distance<nearestDistance){nearestDistance=distance;receiver=index;}});rivalShot=null;rivalShotProgress=0;possession='own';selected=receiver;ownKeeperPassTarget=receiver;ownKeeperPassStart.copy(ball.position);ownKeeperPassProgress=0;stealCooldown=1.4;}}
       }else if(rivalPassTarget!==null&&possession==='rival'){
-        rivalPassProgress=Math.min(1,rivalPassProgress+dt*(1.45+botTactic.attackSpeed*.055));const receiver=rivals[rivalPassTarget];const passEnd=new THREE.Vector3(receiver.position.x-.8,.45,receiver.position.z);ball.position.lerpVectors(rivalPassStart,passEnd,rivalPassProgress);ball.position.y=.42+Math.sin(rivalPassProgress*Math.PI)*.4;ball.rotation.z-=dt*13;
+        rivalPassProgress=Math.min(1,rivalPassProgress+dt*(1.45+botTactic.attackSpeed*.055));const receiver=rivals[rivalPassTarget];const passEnd=new THREE.Vector3(receiver.position.x-.8,.56,receiver.position.z);ball.position.lerpVectors(rivalPassStart,passEnd,rivalPassProgress);ball.position.y=.56+Math.sin(rivalPassProgress*Math.PI)*.4;ball.rotation.z-=dt*13;
         if(rivalPassProgress>=1){rivalSelected=rivalPassTarget;rivalPassTarget=null;rivalPassProgress=0;rivalPasses+=1;aiPassCooldown=1.7+Math.random()*1.2;}
       }else if(ownKeeperPassTarget!==null&&possession==='own'){
-        ownKeeperPassProgress=Math.min(1,ownKeeperPassProgress+dt*1.65);const receiver=own[ownKeeperPassTarget];const passEnd=new THREE.Vector3(receiver.position.x+.8,.45,receiver.position.z);ball.position.lerpVectors(ownKeeperPassStart,passEnd,ownKeeperPassProgress);ball.position.y=.42+Math.sin(ownKeeperPassProgress*Math.PI)*.5;ball.rotation.z+=dt*13;
+        ownKeeperPassProgress=Math.min(1,ownKeeperPassProgress+dt*1.65);const receiver=own[ownKeeperPassTarget];const passEnd=new THREE.Vector3(receiver.position.x+.8,.56,receiver.position.z);ball.position.lerpVectors(ownKeeperPassStart,passEnd,ownKeeperPassProgress);ball.position.y=.56+Math.sin(ownKeeperPassProgress*Math.PI)*.5;ball.rotation.z+=dt*13;
         if(ownKeeperPassProgress>=1){selected=ownKeeperPassTarget;ownKeeperPassTarget=null;ownKeeperPassProgress=0;}
       }else if(passTarget!==null&&possession==='own'){
-        passProgress=Math.min(1,passProgress+dt*1.8);const receiver=own[passTarget];const passEnd=new THREE.Vector3(receiver.position.x+.8,.45,receiver.position.z);ball.position.lerpVectors(passStart,passEnd,passProgress);ball.position.y=.42+Math.sin(passProgress*Math.PI)*.35;ball.rotation.z+=dt*13;
+        passProgress=Math.min(1,passProgress+dt*1.8);const receiver=own[passTarget];const passEnd=new THREE.Vector3(receiver.position.x+.8,.56,receiver.position.z);ball.position.lerpVectors(passStart,passEnd,passProgress);ball.position.y=.56+Math.sin(passProgress*Math.PI)*.35;ball.rotation.z+=dt*13;
         let interceptor=-1;let interceptDistance=Infinity;rivals.forEach((defender,index)=>{const distance=defender.position.distanceTo(ball.position);if(distance<interceptDistance){interceptDistance=distance;interceptor=index;}});if(interceptor>=0&&interceptDistance<1.35){possession='rival';rivalSelected=interceptor;passTarget=null;passProgress=0;rivalPasses=0;aiPassCooldown=.45;stealCooldown=.7;}
-        if(passTarget!==null&&passProgress>=1){selected=passTarget;passTarget=null;passProgress=0;}
+        if(passTarget!==null&&passProgress>=1){ownPassCycle.add(passTarget);selected=passTarget;passTarget=null;passProgress=0;}
       }else{if(kickoffPause>0)ball.position.set(0,.42,0);else ball.position.set(carrier.position.x+(possession==='own'?1:-1),.45,carrier.position.z);keepers.forEach((keeper)=>{keeper.position.y=THREE.MathUtils.lerp(keeper.position.y,0,Math.min(1,7*dt));keeper.position.z=THREE.MathUtils.lerp(keeper.position.z,0,Math.min(1,5*dt));keeper.rotation.x=THREE.MathUtils.lerp(keeper.rotation.x,0,Math.min(1,7*dt));keeper.rotation.z=THREE.MathUtils.lerp(keeper.rotation.z,0,Math.min(1,7*dt));(keeper.userData.arms as THREE.Group[]).forEach((arm)=>arm.rotation.x=THREE.MathUtils.lerp(arm.rotation.x,0,Math.min(1,7*dt)));});}
+      if(possession!==lastPossession){ownPassCycle.clear();if(possession==='own')ownPassCycle.add(selected);lastPossession=possession;}
       if(!paused){
         const refereeTarget=new THREE.Vector3(ball.position.x+(possession==='own'?-5:5),0,ball.position.z+4);
         const refereeDirection=refereeTarget.sub(referee.position);refereeDirection.y=0;
@@ -489,7 +552,7 @@ export function ThreePitch({ paused, playerNumber, playerSkin, playerHair, playe
       camera.lookAt(lookAhead);renderer.render(scene,camera); };
     animate();
     const resize=()=>{camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();renderer.setSize(host.clientWidth,host.clientHeight)}; window.addEventListener('resize',resize);
-    return()=>{cancelAnimationFrame(frame);window.clearInterval(tacticTimer);window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('mobile-pass',mobilePass);window.removeEventListener('mobile-switch',mobileSwitch);window.removeEventListener('resize',resize);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointermove',pointerMove);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('contextmenu',stopMenu);renderer.dispose();host.removeChild(renderer.domElement)};
+    return()=>{cancelAnimationFrame(frame);window.clearInterval(tacticTimer);window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('mobile-pass',mobilePass);window.removeEventListener('mobile-switch',mobileSwitch);window.removeEventListener('football-halftime-kickoff',halftimeKickoff);window.removeEventListener('resize',resize);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointermove',pointerMove);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('contextmenu',stopMenu);renderer.dispose();host.removeChild(renderer.domElement)};
   }, [paused, playerAccessories.join(','), playerHair, playerHeight, playerNumber, playerSkin, homeTeam, awayTeam]);
   return <div className="three-pitch" ref={mount} />;
 }
