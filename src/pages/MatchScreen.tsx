@@ -18,7 +18,7 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
   const [message, setMessage] = useState('Выбери направление и силу удара');
   const [finished, setFinished] = useState(false);
   const finishedRef=useRef(false);
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(120);
   const [celebrating, setCelebrating] = useState(false);
   const [shotResult, setShotResult] = useState<'goal' | 'save' | 'weak' | 'over' | null>(null);
   const [shotPower,setShotPower]=useState(0);const [chargingShot,setChargingShot]=useState(false);const shotStyle='normal' as const;
@@ -49,7 +49,7 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
   useEffect(()=>{const AudioContextClass=window.AudioContext;const audio=new AudioContextClass();void audio.resume();const master=audio.createGain();master.gain.setValueAtTime(.0001,audio.currentTime);master.gain.exponentialRampToValueAtTime(.28,audio.currentTime+.08);master.connect(audio.destination);const melody=[196,246.94,293.66,392,329.63,293.66,246.94,392,220,261.63,329.63,440,392,329.63,293.66,392,196,246.94,293.66,392,440,392,329.63,293.66,246.94,293.66,329.63,392];melody.forEach((frequency,index)=>{const start=audio.currentTime+.12+index*.235;const oscillator=audio.createOscillator();const gain=audio.createGain();oscillator.type=index%4===0?'square':'triangle';oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(index%4===0?.16:.28,start+.035);gain.gain.exponentialRampToValueAtTime(.0001,start+.2);oscillator.connect(gain);gain.connect(master);oscillator.start(start);oscillator.stop(start+.22);if(index%4===0){const drum=audio.createOscillator();const drumGain=audio.createGain();drum.type='sine';drum.frequency.setValueAtTime(115,start);drum.frequency.exponentialRampToValueAtTime(48,start+.13);drumGain.gain.setValueAtTime(.3,start);drumGain.gain.exponentialRampToValueAtTime(.0001,start+.16);drum.connect(drumGain);drumGain.connect(master);drum.start(start);drum.stop(start+.17);}});const timer=window.setTimeout(()=>{setPreMatch(false);setPaused(false);if(audio.state!=='closed')void audio.close();},11800);return()=>{window.clearTimeout(timer);if(audio.state!=='closed')void audio.close();};},[]);
   useEffect(()=>{const audio=new AudioContext();void audio.resume();const duration=7;const buffer=audio.createBuffer(1,audio.sampleRate*duration,audio.sampleRate);const channel=buffer.getChannelData(0);for(let index=0;index<channel.length;index+=1)channel[index]=(Math.random()*2-1)*(.28+.16*Math.sin(index/audio.sampleRate*Math.PI*4));const crowd=audio.createBufferSource();const filter=audio.createBiquadFilter();const gain=audio.createGain();filter.type='bandpass';filter.frequency.value=720;filter.Q.value=.55;gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.075,audio.currentTime+.3);gain.gain.setValueAtTime(.075,audio.currentTime+6.2);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+7);crowd.buffer=buffer;crowd.connect(filter);filter.connect(gain);gain.connect(audio.destination);crowd.start();crowd.stop(audio.currentTime+duration);const closeTimer=window.setTimeout(()=>{if(audio.state!=='closed')void audio.close();},7200);return()=>{window.clearTimeout(closeTimer);if(audio.state!=='closed')void audio.close();};},[]);
   useEffect(()=>{finishedRef.current=finished;if(finished){setChargingShot(false);setShotResult(null);}},[finished]);
-  useEffect(()=>{if(timeLeft!==30||halftimeShown.current)return;halftimeShown.current=true;setHalftime(true);setPaused(true);const timer=window.setTimeout(()=>{setHalftime(false);setPaused(false);window.setTimeout(()=>window.dispatchEvent(new Event('football-halftime-kickoff')),120);},4000);return()=>window.clearTimeout(timer);},[timeLeft]);
+  useEffect(()=>{if(timeLeft!==60||halftimeShown.current)return;halftimeShown.current=true;setHalftime(true);setPaused(true);const timer=window.setTimeout(()=>{setHalftime(false);setPaused(false);window.setTimeout(()=>window.dispatchEvent(new Event('football-halftime-kickoff')),120);},4000);return()=>window.clearTimeout(timer);},[timeLeft]);
 
   useEffect(() => {
     setResolving(false);
@@ -156,7 +156,7 @@ export function MatchScreen({ career, match, onFinish }: { career: Career; match
     return () => window.clearInterval(timer);
   }, [finished, paused, preMatch]);
 
-  const displayedMinute=Math.min(90,Math.round((60-timeLeft)*1.5));
+  const displayedMinute=Math.min(90,Math.round((120-timeLeft)*.75));
   const matchTime = `${String(displayedMinute).padStart(2, '0')}:00`;
 
   const quitMatch = () => {
